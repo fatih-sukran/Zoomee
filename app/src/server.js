@@ -43,7 +43,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const app = express();
-
+const fs = require('fs');
 const Logger = require('./Logger');
 const log = new Logger('server');
 
@@ -108,6 +108,7 @@ const view = {
     notFound: path.join(__dirname, '../../', 'public/view/404.html'),
     permission: path.join(__dirname, '../../', 'public/view/permission.html'),
     privacy: path.join(__dirname, '../../', 'public/view/privacy.html'),
+    login: path.join(__dirname, '../../', 'public/view/loginPage.html'),
 };
 
 let channels = {}; // collect channels
@@ -139,12 +140,31 @@ app.use((err, req, res, next) => {
 
 // all start from here
 app.get(['/'], (req, res) => {
-    res.sendFile(view.landing);
+    res.sendFile(view.login);
 });
 
 // set new room name and join
 app.get(['/newcall'], (req, res) => {
     res.sendFile(view.newCall);
+});
+
+app.post(['/login'], (req, res) => {
+    let testModel = 'email=test%40gmail.com&password=12345';
+    const body = [];
+    req.on('data', (chunk) => {
+        console.log(chunk);
+        body.push(chunk);
+    });
+    req.on('end', () => {
+        const parseBody = Buffer.concat(body).toString();
+        if (parseBody === testModel) {
+            res.sendFile(view.newCall);
+        } else {
+            res.statusCode = 302;
+            res.setHeader('Location', '/');
+            return res.end();
+        }
+    });
 });
 
 // if not allow video/audio
