@@ -1,4 +1,4 @@
-/*
+""/*
 http://patorjk.com/software/taag/#p=display&f=ANSI%20Regular&t=Server
 
 ███████ ███████ ██████  ██    ██ ███████ ██████  
@@ -35,7 +35,7 @@ dependencies: {
 
 require('dotenv').config();
 
-const { Server } = require('socket.io');
+const {Server} = require('socket.io');
 const http = require('http');
 const https = require('https');
 const compression = require('compression');
@@ -49,6 +49,8 @@ const log = new Logger('server');
 
 const isHttps = false; // must be the same on client.js
 const port = process.env.PORT || 3000; // must be the same to client.js signalingServerPort
+
+const db = require("../db/db")
 
 let io, server, host;
 
@@ -80,7 +82,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = yamlJS.load(path.join(__dirname + '/../api/swagger.yaml'));
 
 // Api config
-const { v4: uuidV4 } = require('uuid');
+const {v4: uuidV4} = require('uuid');
 const apiBasePath = '/api/v1'; // api endpoint path
 const api_docs = host + apiBasePath + '/docs'; // api docs
 const api_key_secret = process.env.API_KEY_SECRET || 'mirotalk_default_secret';
@@ -108,12 +110,34 @@ const view = {
     notFound: path.join(__dirname, '../../', 'public/view/404.html'),
     permission: path.join(__dirname, '../../', 'public/view/permission.html'),
     privacy: path.join(__dirname, '../../', 'public/view/privacy.html'),
-    login: path.join(__dirname, '../../', 'public/view/loginPage.html'),
+    loginPage: path.join(__dirname, '../../', 'public/view/loginPage.html')
 };
 
 let channels = {}; // collect channels
 let sockets = {}; // collect sockets
 let peers = {}; // collect peers info grp by channels
+
+
+
+// ===================================================
+
+var users = {'fth.21.81@gmail.com':{name: "fatih", surname: "şükran", email: "fth.21.81@gmail.com", password: "123"}};
+var meets = {};
+var participants = {};
+
+var user = {name: "fatih", surname: "şükran", email: "fth.21.81@gmail.com", password: "123"};
+
+var meet = {title: "deneme meeti", date: 1294959239, meet_code: "LKYTYBLSS"};
+var participant = [
+    {email: "fth.21.81@gmail.com", meet_id: 0, role_id: 0},
+    {email: "fth.21.8.1@gmail.com", meet_id: 0, role_id: 1},
+    {email: "fth..21.81@gmail.com", meet_id: 0, role_id: 1},
+];
+
+
+// ==================================================
+
+
 
 app.use(cors()); // Enable All CORS Requests for all origins
 app.use(compression()); // Compress all HTTP responses using GZip
@@ -128,7 +152,7 @@ app.use((err, req, res, next) => {
             body: req.body,
             error: err.message,
         });
-        return res.status(400).send({ status: 404, message: err.message }); // Bad request
+        return res.status(400).send({status: 404, message: err.message}); // Bad request
     }
     if (req.path.substr(-1) === '/' && req.path.length > 1) {
         let query = req.url.slice(req.path.length);
@@ -138,9 +162,18 @@ app.use((err, req, res, next) => {
     }
 });
 
+function login(email, password) {
+    if (email in users && users[email].password === password) {
+        console.log("giriş başarılı");
+        return true;
+    }
+    console.log("giriş başarısız");
+    return false
+}
+
 // all start from here
 app.get(['/'], (req, res) => {
-    res.sendFile(view.login);
+    res.sendFile(view.loginPage);
 });
 
 // set new room name and join
@@ -148,24 +181,6 @@ app.get(['/newcall'], (req, res) => {
     res.sendFile(view.newCall);
 });
 
-app.post(['/login'], (req, res) => {
-    let testModel = 'email=test%40gmail.com&password=12345';
-    const body = [];
-    req.on('data', (chunk) => {
-        console.log(chunk);
-        body.push(chunk);
-    });
-    req.on('end', () => {
-        const parseBody = Buffer.concat(body).toString();
-        if (parseBody === testModel) {
-            res.sendFile(view.newCall);
-        } else {
-            res.statusCode = 302;
-            res.setHeader('Location', '/');
-            return res.end();
-        }
-    });
-});
 
 // if not allow video/audio
 app.get(['/permission'], (req, res) => {
@@ -210,9 +225,9 @@ app.get('/join/*', (req, res) => {
 });
 
 /**
-    MiroTalk API v1
-    For api docs we use: https://swagger.io/
-*/
+ MiroTalk API v1
+ For api docs we use: https://swagger.io/
+ */
 
 // api docs
 app.use(apiBasePath + '/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -226,13 +241,13 @@ app.post([apiBasePath + '/meeting'], (req, res) => {
             header: req.headers,
             body: req.body,
         });
-        return res.status(403).json({ error: 'Unauthorized!' });
+        return res.status(403).json({error: 'Unauthorized!'});
     }
     // setup meeting URL
     let host = req.headers.host;
     let meetingURL = getMeetingURL(host);
     res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ meeting: meetingURL }));
+    res.end(JSON.stringify({meeting: meetingURL}));
 
     // log.debug the output if all done
     log.debug('MiroTalk get meeting - Authorized', {
@@ -392,7 +407,7 @@ io.sockets.on('connect', (socket) => {
         for (let channel in socket.channels) {
             removePeerFrom(channel);
         }
-        log.debug('[' + socket.id + '] disconnected', { reason: reason });
+        log.debug('[' + socket.id + '] disconnected', {reason: reason});
         delete sockets[socket.id];
     });
 
@@ -493,8 +508,8 @@ io.sockets.on('connect', (socket) => {
         log.debug('connected peers grp by roomId', peers);
 
         for (let id in channels[channel]) {
-            await channels[channel][id].emit('removePeer', { peer_id: socket.id });
-            socket.emit('removePeer', { peer_id: id });
+            await channels[channel][id].emit('removePeer', {peer_id: socket.id});
+            socket.emit('removePeer', {peer_id: id});
             log.debug('[' + socket.id + '] emit removePeer [' + id + ']');
         }
     }
