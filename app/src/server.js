@@ -43,7 +43,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const app = express();
-
+const fs = require('fs');
 const Logger = require('./Logger');
 const log = new Logger('server');
 
@@ -181,16 +181,6 @@ app.get(['/newcall'], (req, res) => {
     res.sendFile(view.newCall);
 });
 
-app.post(['/login'], (req, res) => {
-    console.log(req.body)
-    if (req.body.email in users && users[req.body.email].password === req.body.password) {
-        console.log("giriş başarılı");
-        res.send(users[req.body.email]);
-    }
-    else{
-        console.log("giriş BASARISIZ");
-    }
-})
 
 // if not allow video/audio
 app.get(['/permission'], (req, res) => {
