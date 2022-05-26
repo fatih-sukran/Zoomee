@@ -21,6 +21,7 @@
         "dotenv": "^16.0.0",
         "express": "^4.17.3",
         "ngrok": "^4.3.0",
+        "pg": "^8.7.3",
         "socket.io": "^4.4.1",
         "swagger-ui-express": "^4.3.0",
         "uuid": "8.3.2",
