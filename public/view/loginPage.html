@@ -97,41 +97,18 @@
 
 
 <script>
-    const btnLogin = document.getElementById("btnLogin")
-    const url = "http://localhost:3000/login"
 
-    btnLogin.addEventListener('click', () => {
-        console.log("click çalışıyor")
+    const url = "http://localhost:3000/login";
+    const dataToSend = {};
+        dataToSend.email = document.getElementById("email").value;
+        dataToSend.password = document.getElementById("password").value;
 
-        const dataToSend = {email: "hey@mail.com", password: "101010"}
-        dataToSend.email = document.getElementById("email").value
-        dataToSend.password = document.getElementById("password").value
-        fetch(url, {
-            credentials: "same-origin",
-            mode: "same-origin",
-            method: "post",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(dataToSend)
-        })
-            .then(resp => {
-                if (resp.status === 200) {
-                    return resp.json()
-                } else {
-                    console.log("Status: " + resp.status)
-                    return Promise.reject("server")
-                }
-            })
-            .then(dataJson => {
-                console.log(dataJson)
-                   // window.location.href = "http://localhost:3000/dashboard"
-            })
-            .catch(err => {
-                if (err === "server") return
-                console.log(err)
-            })
+    $('.btnLogin').click(() =>{
+        $.post(url, dataToSend, (data, status) => {
+            console.log('data: ${data} statusCode: ${status}');
+        });
+    });
 
-
-    })
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
