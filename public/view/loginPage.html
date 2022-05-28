@@ -60,12 +60,13 @@
                         <h1 class="font-weight-bold py-4">MIROTALK</h1>
                         <h4>Sign into your account</h4>
 
-                        <form action="/login" method="POST">
+                        <!-- <form> -->
                             <div class="form-row">
                                 <div class="col-lg-7 pt-5">
                                     <input
                                         type="email"
                                         name="email"
+                                        id = "email"
                                         class="form-control"
                                         placeholder="Email-Adress"
                                         class="form-control my-3"
@@ -77,6 +78,7 @@
                                     <input
                                         type="password"
                                         name="password"
+                                        id = "password"
                                         placeholder="*******"
                                         class="form-control my-3"
                                     />
@@ -84,18 +86,14 @@
                             </div>
                             <div class="form-row">
                                 <div class="col-lg-7">
-                                    <button type="submit" class="btn1 mt-3 mb-5">Login</button>
+                                    <button type = "button" class = "btn1 mt-3 mb-5" id="btnLogin">Login</button>
                                 </div>
                             </div>
-                        </form>
+                        <!-- </form> -->
                     </div>
                 </div>
             </div>
         </section>
-
-
-
-
 <script>
 
     const url = "http://localhost:3000/login";
@@ -103,11 +101,48 @@
         dataToSend.email = document.getElementById("email").value;
         dataToSend.password = document.getElementById("password").value;
 
-    $('.btnLogin').click(() =>{
-        $.post(url, dataToSend, (data, status) => {
-            console.log('data: ${data} statusCode: ${status}');
-        });
-    });
+    // $('#btnLogin').click(() =>{
+    //     $.post(url, dataToSend, (data, status) => {
+    //         console.log('data: ${data} statusCode: ${status}');
+    //     });
+    // });
+
+    const btnLogin = document.getElementById("btnLogin")
+
+    btnLogin.addEventListener('click', () => {
+        console.log("click çalışıyor")
+
+        const dataToSend = {email: "hey@mail.com", password: "101010"}
+        dataToSend.email = document.getElementById("email").value
+        dataToSend.password = document.getElementById("password").value
+        fetch(url, {
+            credentials: "same-origin",
+            mode: "same-origin",
+            method: "post",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(dataToSend)
+        })
+            .then(resp => {
+                console.log("ilk yer " + resp.body);
+                if (resp.status === 200) {
+                    return resp.json()
+                } else {
+                    console.log("Status: " + resp.status)
+                    // return Promise.reject("server")
+                }
+            })
+            .then(dataJson => {
+                console.log("ikinci yer " + dataJson)
+                console.log(dataJson)
+                   // window.location.href = "http://localhost:3000/dashboard"
+            })
+            .catch(err => {
+                if (err === "server") return
+                console.log(err)
+            })
+
+
+    })
 
 </script>
 
