@@ -122,21 +122,28 @@ let peers = {}; // collect peers info grp by channels
 
 // ===================================================
 
-var users = {'fth.21.81@gmail.com': {name: "fatih", surname: "şükran", email: "fth.21.81@gmail.com", password: "123"}};
-var meets = {};
-var participants = {};
-
-var user = {name: "fatih", surname: "şükran", email: "fth.21.81@gmail.com", password: "123"};
-
-var meet = {title: "deneme meeti", date: 1294959239, meet_code: "LKYTYBLSS"};
-var participant = [
-    {email: "fth.21.81@gmail.com", meet_id: 0, role_id: 0},
-    {email: "fth.21.8.1@gmail.com", meet_id: 0, role_id: 1},
-    {email: "fth..21.81@gmail.com", meet_id: 0, role_id: 1},
-];
+// var users = {'fth.21.81@gmail.com': {name: "fatih", surname: "şükran", email: "fth.21.81@gmail.com", password: "123"}};
+// var meets = {};
+// var participants = {};
+//
+// var user = {name: "fatih", surname: "şükran", email: "fth.21.81@gmail.com", password: "123"};
+//
+// var meet = {title: "deneme meeti", date: 1294959239, meet_code: "LKYTYBLSS"};
+// var participant = [
+//     {email: "fth.21.81@gmail.com", meet_id: 0, role_id: 0},
+//     {email: "fth.21.8.1@gmail.com", meet_id: 0, role_id: 1},
+//     {email: "fth..21.81@gmail.com", meet_id: 0, role_id: 1},
+// ];
 
 
 // ==================================================
+
+const mongoose = require('mongoose');
+mongoose.connect('mongodb+srv://zoomee:12345@cluster0.c7w9d.mongodb.net/?retryWrites=true&w=majority', {useNewUrlParser: true});
+const Schema = mongoose.Schema
+
+let userSchema = new Schema({firstName: String, lastName: String, email: String, password: String})
+let user = mongoose.model('user', userSchema)
 
 
 app.use(cors()); // Enable All CORS Requests for all origins
@@ -176,13 +183,14 @@ app.get(['/'], (req, res) => {
     res.sendFile(view.loginPage);
 });
 
+
 app.post(['/login'], (req, res) => {
     const {email, password} = req.body
     console.log(req.body)
     console.log(email, password)
     pool.query('SELECT * FROM users WHERE email = $1 and password = $2', [email, password], (error, results) => {
         if (error) {
-            res.status(200).json({message: "USER_NOT_FOUNDs", data: {email, password}})
+            res.status(200).json({message: "USER_NOT_FOUND", data: {email, password}})
 
         }
         res.status(200).json(results)
@@ -191,6 +199,12 @@ app.post(['/login'], (req, res) => {
 
 app.post(['/register'], (req, res) => {
     const {firstName, lastName, email, password} = req.body;
+
+    user.create({firstName: firstName, lastName: lastName, email: email, password: password}, (err, res) => {
+        if (err)
+            throw err
+        console.log(res)
+    })
 
     pool.query('INSERT INTO users (firstName,lastName,email,password) VALUES ($1,$2,$3,$4)', [firstName, lastName, email, password], (error, results) => {
         if (error) {
