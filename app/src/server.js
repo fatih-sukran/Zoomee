@@ -139,12 +139,79 @@ let peers = {}; // collect peers info grp by channels
 // ==================================================
 
 const mongoose = require('mongoose');
+const {resetWatchers} = require("nodemon/lib/monitor/watch");
 mongoose.connect('mongodb+srv://zoomee:12345@cluster0.c7w9d.mongodb.net/?retryWrites=true&w=majority', {useNewUrlParser: true});
 const Schema = mongoose.Schema
 
-let userSchema = new Schema({firstName: String, lastName: String, email: String, password: String})
+let userSchema = new Schema({
+    firstName: String,
+    lastName: String,
+    email: {type: String, required: [true, 'E-posta alanı zorunludur.'], unique: [true, 'Dublicate Email']},
+    password: String
+})
 let user = mongoose.model('user', userSchema)
+let meetSchema = new Schema({title: String, date: Date, users: [{type: Schema.ObjectId, ref: 'user'}]})
+let meet = mongoose.model('meet', meetSchema)
+let returnModel = {status: false, data: {}}
 
+function defaultReturn(error, result) {
+    if (error) {
+        returnModel = {status: false, data: error}
+        return returnModel
+    }
+    console.log(result)
+    returnModel = {status: true, data: result}
+    return returnModel
+
+}
+
+function addUser({firstName, lastName, email, password}) {
+    user.create({firstName: firstName, lastName: lastName, email: email, password: password}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function getAllUsers() {
+    user.find({}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function deleteUserByEmail(email) {
+    user.deleteMany({email: email}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function getUserById(id) {
+    user.findOne({id: id}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function getUserByEmailAndPassword(email, password) {
+    user.findOne({email: email, password: password}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function addMeet({title, date, users}) {
+    meet.create({title: title, date: date, users: users}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function getAllMeet() {
+    meet.find({}).populate('users').exec((error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function getMeetByUserId(id) {
+    meet.find({user: {_id: id}}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
 
 app.use(cors()); // Enable All CORS Requests for all origins
 app.use(compression()); // Compress all HTTP responses using GZip
@@ -169,14 +236,6 @@ app.use((err, req, res, next) => {
     }
 });
 
-function login(email, password) {
-    if (email in users && users[email].password === password) {
-        console.log("giriş başarılı");
-        return true;
-    }
-    console.log("giriş başarısız");
-    return false
-}
 
 // all start from here
 app.get(['/'], (req, res) => {
@@ -188,30 +247,42 @@ app.post(['/login'], (req, res) => {
     const {email, password} = req.body
     console.log(req.body)
     console.log(email, password)
-    pool.query('SELECT * FROM users WHERE email = $1 and password = $2', [email, password], (error, results) => {
-        if (error) {
-            res.status(200).json({message: "USER_NOT_FOUND", data: {email, password}})
-
-        }
-        res.status(200).json(results)
+    user.find({email: email, password: password}, (error, result) => {
+        if (error || result.length === 0)
+            return res.status(200).json({message: "user not found", data: null})
+        console.log(result)
+        return res.status(200).json({message: "user found in database", data: result})
     })
 })
 
 app.post(['/register'], (req, res) => {
-    const {firstName, lastName, email, password} = req.body;
 
-    user.create({firstName: firstName, lastName: lastName, email: email, password: password}, (err, res) => {
-        if (err)
-            throw err
-        console.log(res)
-    })
+    addUser(req.body)
 
-    pool.query('INSERT INTO users (firstName,lastName,email,password) VALUES ($1,$2,$3,$4)', [firstName, lastName, email, password], (error, results) => {
-        if (error) {
-            throw error
-        }
-        res.status(200).json(results)
-    })
+    if (returnModel.status)
+        return res.status(200).json({message: "user added", data: returnModel.data})
+    return res.status(400).json({message: "bir hata oldu", data: returnModel.data})
+
+
+})
+
+app.post(['/addmeet'], (req, res) => {
+    console.log(req.body)
+    addMeet(req.body)
+    if (returnModel.status)
+        return res.status(200).json({message: "meet added", data: returnModel.data})
+    return res.status(400).json({message: "bir hata oldu", data: returnModel.data})
+
+
+})
+
+app.get(['/getallmeet'], (req, res) => {
+    getByUserId(req.body.id)
+    if (returnModel.status)
+        return res.status(200).json({message: "meet added", data: returnModel.data})
+    return res.status(400).json({message: "bir hata oldu", data: returnModel.data})
+
+
 })
 
 // set new room name and join
