@@ -110,7 +110,8 @@ const view = {
     notFound: path.join(__dirname, '../../', 'public/view/404.html'),
     permission: path.join(__dirname, '../../', 'public/view/permission.html'),
     privacy: path.join(__dirname, '../../', 'public/view/privacy.html'),
-    loginPage: path.join(__dirname, '../../', 'public/view/loginPage.html')
+    loginPage: path.join(__dirname, '../../', 'public/view/loginPage.html'),
+    dashboard: path.join(__dirname, '../../', 'public/view/dashboard.html')
 };
 
 let channels = {}; // collect channels
@@ -181,6 +182,10 @@ app.get(['/newcall'], (req, res) => {
     res.sendFile(view.newCall);
 });
 
+
+app.get(['/dashboard'],(req,res)=>{
+    res.sendFile(view.dashboard)
+})
 
 // if not allow video/audio
 app.get(['/permission'], (req, res) => {
