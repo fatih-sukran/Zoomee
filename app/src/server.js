@@ -177,7 +177,7 @@ app.get(['/'], (req, res) => {
 });
 
 app.post(['/login'], (req, res) => {
-    const {email, password} = req
+    const {email, password} = req.body
     console.log(req)
     console.log(email, password)
     pool.query('SELECT * FROM users WHERE email = $1 and password = $2', [email, password], (error, results) => {
