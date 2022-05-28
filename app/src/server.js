@@ -89,6 +89,7 @@ const api_key_secret = process.env.API_KEY_SECRET || 'mirotalk_default_secret';
 
 // Ngrok config
 const ngrok = require('ngrok');
+const pool = require("../db/db");
 const ngrokEnabled = process.env.NGROK_ENABLED;
 const ngrokAuthToken = process.env.NGROK_AUTH_TOKEN;
 
@@ -119,10 +120,9 @@ let sockets = {}; // collect sockets
 let peers = {}; // collect peers info grp by channels
 
 
-
 // ===================================================
 
-var users = {'fth.21.81@gmail.com':{name: "fatih", surname: "şükran", email: "fth.21.81@gmail.com", password: "123"}};
+var users = {'fth.21.81@gmail.com': {name: "fatih", surname: "şükran", email: "fth.21.81@gmail.com", password: "123"}};
 var meets = {};
 var participants = {};
 
@@ -137,7 +137,6 @@ var participant = [
 
 
 // ==================================================
-
 
 
 app.use(cors()); // Enable All CORS Requests for all origins
@@ -177,13 +176,37 @@ app.get(['/'], (req, res) => {
     res.sendFile(view.loginPage);
 });
 
+app.post(['/login'], (req, res) => {
+    const {email, password} = req
+    console.log(req)
+    console.log(email, password)
+    pool.query('SELECT * FROM users WHERE email = $1 and password = $2', [email, password], (error, results) => {
+        if (error) {
+            res.status(400).json({message: "USER_NOT_FOUND"})
+
+        }
+        res.status(200).json(results)
+    })
+})
+
+app.post(['/register'], (req, res) => {
+    const {firstName, lastName, email, password} = req.body;
+
+    pool.query('INSERT INTO users (firstName,lastName,email,password) VALUES ($1,$2,$3,$4)', [firstName, lastName, email, password], (error, results) => {
+        if (error) {
+            throw error
+        }
+        res.status(200).json(results)
+    })
+})
+
 // set new room name and join
 app.get(['/newcall'], (req, res) => {
     res.sendFile(view.newCall);
 });
 
 
-app.get(['/dashboard'],(req,res)=>{
+app.get(['/dashboard'], (req, res) => {
     res.sendFile(view.dashboard)
 })
 
