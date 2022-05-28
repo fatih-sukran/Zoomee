@@ -178,11 +178,11 @@ app.get(['/'], (req, res) => {
 
 app.post(['/login'], (req, res) => {
     const {email, password} = req.body
-    console.log(req)
+    console.log(req.body)
     console.log(email, password)
     pool.query('SELECT * FROM users WHERE email = $1 and password = $2', [email, password], (error, results) => {
         if (error) {
-            res.status(400).json({message: "USER_NOT_FOUND"})
+            res.status(200).json({message: "USER_NOT_FOUNDs", data: {email, password}})
 
         }
         res.status(200).json(results)
