@@ -41,11 +41,11 @@
                    <p class="custom">Developed for secure business meetings, Miro Talk has been redesigned. The service is now available to anyone for free.</p>
                 </div>
                 <div>
-                    <button type="button" class="btn btn-primary"> <i class="fa fa-camera"></i> New Meeting</button>
+                    <button type="button" class="btn btn-primary" onclick="clickNewMeetingEvent()"> <i class="fa fa-camera"></i> New Meeting</button>
                     <button type="button" class="btn btn-primary"> <i class="fa fa-calendar"></i> Plan Meet For Later</button>
                     <p> </p>
                     <form class="form-floating">
-                        <input class="form-control" id="floatingInputValue" placeholder="Please enter code">
+                        <input class="form-control" id="floatingInputValue" placeholder="Please enter code" >
                         <label for="floatingInputValue">Please enter code for new Meeting</label>
                       </form>
                 </div>
@@ -155,6 +155,9 @@
            </div>
         </div>  
     </section>
+
+    <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="../js/global.js"></script>
     
 </body>
 </html>

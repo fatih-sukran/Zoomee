@@ -48,7 +48,7 @@
         }
     </style>
   </head>
-  <body>
+  <body onload = "init()">
 
     <section class="Form my-4 mx-5">
         <div class="container my-auto">
@@ -63,22 +63,22 @@
                     <form> 
                         <div class="form-row">
                             <div class="col-lg-7 ">
-                                <input type="name" placeholder="First Name" class="form-control my-3 ">
+                                <input type="name" placeholder="First Name" class="form-control my-3 " id="name">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="col-lg-7">
-                                <input type="surname" placeholder="Last Name" class="form-control my-3 ">
+                                <input type="surname" placeholder="Last Name" class="form-control my-3 " id="surname">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="col-lg-7">
-                                <input type="email" placeholder="Email-Adress" class="form-control my-3 ">
+                                <input type="email" placeholder="Email-Adress" class="form-control my-3 " id="email">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="col-lg-7">
-                                <input type="password" placeholder="Password" class="form-control my-3">
+                                <input type="password" placeholder="Password" class="form-control my-3" id="password">
                             </div>
                         </div>
                         <div class="form-row">
@@ -89,23 +89,23 @@
                         
                     
 
-                        <div class="form-check">
+                        <!-- <div class="form-check">
                             <input class="form-check-input " type="checkbox" value="" id="flexCheckDefault">
                             <label class="form-check-label " for="flexCheckDefault">
                              <p>I accept the <a href="#">Privacy Policy</a></p>
                             </label>
-                          </div>
+                          </div> -->
 
                           <div class="form-row">
 
                         
                             <div class="col-lg-7">
-                                <button type="button" class="btn1 mt-3 mb-5">Submit</button>
+                                <button type="button" class="btn1 mt-3 mb-5" id="registerBtn" onclick="clickRegisterEvent()">Submit</button>
                             </div>
                         </div>
 
 
-                    
+                    <a href="/">Do you have an account? Login</a>
 
                     </form>
                 </div>
@@ -113,9 +113,8 @@
         </div>
     </section>
     
-
-
-
+    <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="../js/global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
 
     

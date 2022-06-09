@@ -89,6 +89,7 @@ const api_key_secret = process.env.API_KEY_SECRET || 'mirotalk_default_secret';
 
 // Ngrok config
 const ngrok = require('ngrok');
+const pool = require("../db/db");
 const ngrokEnabled = process.env.NGROK_ENABLED;
 const ngrokAuthToken = process.env.NGROK_AUTH_TOKEN;
 
@@ -111,7 +112,8 @@ const view = {
     permission: path.join(__dirname, '../../', 'public/view/permission.html'),
     privacy: path.join(__dirname, '../../', 'public/view/privacy.html'),
     loginPage: path.join(__dirname, '../../', 'public/view/loginPage.html'),
-    dashboard: path.join(__dirname, '../../', 'public/view/dashboard.html')
+    dashboard: path.join(__dirname, '../../', 'public/view/dashboard.html'),
+    register: path.join(__dirname, '../../', 'public/view/registerPage.html')
 };
 
 let channels = {}; // collect channels
@@ -119,16 +121,15 @@ let sockets = {}; // collect sockets
 let peers = {}; // collect peers info grp by channels
 
 
-
 // ===================================================
 
-var users = {'fth.21.81@gmail.com':{name: "fatih", surname: "şükran", email: "fth.21.81@gmail.com", password: "123"}};
+var users = {};
 var meets = {};
 var participants = {};
 
-var user = {name: "fatih", surname: "şükran", email: "fth.21.81@gmail.com", password: "123"};
+// var user = {name: "fatih", surname: "şükran", email: "fth.21.81@gmail.com", password: "123"};
 
-var meet = {title: "deneme meeti", date: 1294959239, meet_code: "LKYTYBLSS"};
+// var meet = {title: "deneme meeti", date: 1294959239, meet_code: "LKYTYBLSS"};
 var participant = [
     {email: "fth.21.81@gmail.com", meet_id: 0, role_id: 0},
     {email: "fth.21.8.1@gmail.com", meet_id: 0, role_id: 1},
@@ -138,7 +139,88 @@ var participant = [
 
 // ==================================================
 
+const mongoose = require('mongoose');
+const {resetWatchers} = require("nodemon/lib/monitor/watch");
+const { Console } = require('console');
+const { redirect } = require('express/lib/response');
+const { password } = require('pg/lib/defaults');
+mongoose.connect('mongodb+srv://zoomee:12345@cluster0.c7w9d.mongodb.net/?retryWrites=true&w=majority', {useNewUrlParser: true});
+const Schema = mongoose.Schema
 
+let userSchema = new Schema({
+    firstName: String,
+    lastName: String,
+    email: {type: String, required: [true, 'E-posta alanı zorunludur.'], unique: [true, 'Dublicate Email']},
+    password: String
+})
+let user = mongoose.model('user', userSchema)
+let meetSchema = new Schema({title: String, date: Date, users: [{type: Schema.ObjectId, ref: 'user'}]})
+let meet = mongoose.model('meet', meetSchema)
+let returnModel = {status: false, data: {}}
+let isQuerying = false;
+
+function defaultReturn(error, result) {
+    isQuerying = false;
+    if (error) {
+        returnModel = {status: false, data: error}
+        return returnModel
+    }
+    console.log("result")
+    returnModel = {status: true, data: result}
+    return returnModel
+
+}
+
+function addUser({firstName, lastName, email, password}) {
+    isQuerying = true;
+    user.create({firstName: firstName, lastName: lastName, email: email, password: password}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function getAllUsers() {
+    isQuerying = true;
+    user.find({}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function deleteUserByEmail(email) {
+    user.deleteMany({email: email}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function getUserById(id) {
+    user.findOne({id: id}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function getUserByEmailAndPassword(email, password) {
+    isQuerying = true;
+    user.findOne({email: email, password: password}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function addMeet({title, date, users}) {
+    meet.create({title: title, date: date, users: users}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function getAllMeet() {
+    meet.find({}).populate('users').exec((error, result) => {
+        defaultReturn(error, result)
+    })
+}
+
+function getMeetByUserId(id) {
+    meet.find({user: {_id: id}}, (error, result) => {
+        defaultReturn(error, result)
+    })
+}
 
 app.use(cors()); // Enable All CORS Requests for all origins
 app.use(compression()); // Compress all HTTP responses using GZip
@@ -163,29 +245,53 @@ app.use((err, req, res, next) => {
     }
 });
 
-function login(email, password) {
-    if (email in users && users[email].password === password) {
-        console.log("giriş başarılı");
-        return true;
-    }
-    console.log("giriş başarısız");
-    return false
+function register(name, surname, email, password) {
+    users[email] = {name: name, surname: surname, password: password};
 }
 
+function login(email, password) {
+    if (users[email] === undefined) return false;
+    return users[email].password === password;
+}
 // all start from here
 app.get(['/'], (req, res) => {
+    // console.log("--- users --- boş");
+    // console.log(users);
+    register("fatih", "şükran", "fth.21.81@gmail.com", "12345");
+    // console.log("--- users --- register");
+    // console.log(users);
+    // console.log("--- login --- email: true, password: true");
+    // console.log(login("fth.21.81@gmail.com", "12345"))
+    // console.log("--- login --- email: true, password: false");
+    // console.log(login("fth.21.81@gmail.com", "123456"));
+    // console.log("--- login --- email: false, password: true");
+    // console.log(login("fth.21.811@gmail.com", "12345"));
+
+
     res.sendFile(view.loginPage);
 });
 
-// set new room name and join
-app.get(['/newcall'], (req, res) => {
-    res.sendFile(view.newCall);
+app.get(['/register'], (req, res) => {
+    res.sendFile(view.register);
 });
 
 
-app.get(['/dashboard'],(req,res)=>{
-    res.sendFile(view.dashboard)
+app.get(['/login'], (req, res) => {
+    res.sendFile(view.loginPage);
 })
+
+app.get(['/getallmeet'], (req, res) => {
+    getByUserId(req.body.id)
+    if (returnModel.status)
+        return res.status(200).json({message: "meet added", data: returnModel.data})
+    return res.status(400).json({message: "bir hata oldu", data: returnModel.data})
+
+
+});
+
+app.get(['/dashboard'], (req, res) => {
+    res.sendFile(view.dashboard)
+});
 
 // if not allow video/audio
 app.get(['/permission'], (req, res) => {
@@ -216,8 +322,21 @@ app.get('/join/', (req, res) => {
             return res.sendFile(view.client);
         }
     }
-    res.redirect('/');
+
+    let code = generateMeetCode();
+    res.redirect('/join/' + code);
 });
+
+function generateMeetCode() {
+    var result           = '';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < 5; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * 
+ charactersLength));
+   }
+   return result;
+}
 
 // Join Room *
 app.get('/join/*', (req, res) => {
@@ -401,9 +520,33 @@ server.listen(port, null, () => {
  */
 io.sockets.on('connect', (socket) => {
     log.debug('[' + socket.id + '] connection accepted');
-
     socket.channels = {};
     sockets[socket.id] = socket;
+
+    /**
+     * on login
+     */
+    socket.on('login', (config) => {
+        console.log("server.js -> sockent.on -> login")
+        console.log("config -> " + config)
+
+        if (login(config.email, config.password)) {
+            console.log("server.js -> login başarılı");
+            socket.emit('passLogin');
+        } else {
+            console.log("server.js -> login başarısız")
+            console.log('email -> ' + config.email);
+            console.log('password -> ' + config.password);
+            socket.emit("failLogin",)
+        }
+    });
+
+    socket.on('register', (config) => {
+        console.log('socket.on -> register');
+        register(config.name, config.surname, config.email, config.password);
+        console.log(users)
+        socket.emit('passRegister');
+    })
 
     /**
      * On peer diconnected
